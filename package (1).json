@@ -1,0 +1,7 @@
+{
+  "name": "telegram-giveaway",
+  "version": "2.0.0",
+  "dependencies": {
+    "telegram": "^2.19.7"
+  }
+}
