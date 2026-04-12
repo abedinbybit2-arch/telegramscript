@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎁 Giveaway Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, orderBy, query, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  const fb = initializeApp({
+    apiKey:"AIzaSyCcMe7jO0qN1za344qkVDczbbTlJghuTA8",
+    authDomain:"teamtm.firebaseapp.com",
+    projectId:"teamtm",
+    storageBucket:"teamtm.firebasestorage.app",
+    messagingSenderId:"1024182337084",
+    appId:"1:1024182337084:web:1d1c71434352bbc6750d39"
+  });
+  const db = getFirestore(fb);
+  window._db=db; window._col=collection; window._add=addDoc;
+  window._get=getDocs; window._q=query; window._ord=orderBy; window._lim=limit;
+</script>
+
+<style>
+:root{
+  --bg:#070a10; --bg2:#0b0f18; --bg3:#101520; --card:#0d1320;
+  --bd:#18263a; --tg:#2AABEE; --tg2:#1a8cc7; --tglow:rgba(42,171,238,.12);
+  --gr:#00d68f; --re:#ff4c6a; --go:#f7c948;
+  --tx:#dce6f2; --mu:#3d5a78;
+  --fH:'Syne',sans-serif; --fM:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:var(--bg); color:var(--tx); font-family:var(--fM);
+  min-height:100vh;
+  background-image:
+    radial-gradient(ellipse 70% 50% at 10% 0%, rgba(42,171,238,.06) 0%,transparent 55%),
+    radial-gradient(ellipse 50% 40% at 90% 100%,rgba(42,171,238,.04) 0%,transparent 55%);
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(42,171,238,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(42,171,238,.022) 1px,transparent 1px);
+  background-size:44px 44px;
+}
+
+/* ── pages ───────────────────────── */
+.page{display:none;position:relative;z-index:1;}
+.page.active{display:block;}
+
+/* ── header ──────────────────────── */
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(7,10,16,.9);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--bd);
+  height:56px;padding:0 20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{font-family:var(--fH);font-size:16px;font-weight:800;color:var(--tg);display:flex;align-items:center;gap:7px;}
+.logo b{color:var(--tx);}
+.hst{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mu);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mu);}
+.dot.on{background:var(--gr);box-shadow:0 0 8px var(--gr);}
+
+/* ── center wrapper ──────────────── */
+.center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.box{
+  background:var(--card);border:1px solid var(--bd);border-radius:18px;
+  padding:40px;width:100%;max-width:400px;
+  box-shadow:0 0 50px rgba(42,171,238,.07);animation:up .35s ease;
+}
+@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.icon{font-size:42px;text-align:center;margin-bottom:12px;}
+.ttl{font-family:var(--fH);font-size:21px;font-weight:800;text-align:center;margin-bottom:5px;}
+.sub{font-size:12px;color:var(--mu);text-align:center;margin-bottom:28px;line-height:1.6;}
+
+/* ── steps ───────────────────────── */
+.steps{display:flex;align-items:center;gap:5px;margin-bottom:22px;}
+.sd{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--bg3);border:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:var(--mu);font-weight:700;flex-shrink:0;
+}
+.sd.on{background:var(--tg);border-color:var(--tg);color:#fff;}
+.sd.done{background:var(--gr);border-color:var(--gr);color:#000;}
+.sl{flex:1;height:1px;background:var(--bd);}
+
+/* ── form ────────────────────────── */
+.field{margin-bottom:13px;}
+label{display:block;font-size:10px;color:var(--mu);margin-bottom:6px;letter-spacing:.1em;text-transform:uppercase;}
+input,select{
+  width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:9px;
+  padding:11px 13px;color:var(--tx);font-family:var(--fM);font-size:14px;
+  outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;
+}
+input:focus,select:focus{border-color:var(--tg);box-shadow:0 0 0 3px var(--tglow);}
+input::placeholder{color:var(--mu);}
+select option{background:var(--bg3);}
+
+/* ── buttons ─────────────────────── */
+.btn{
+  width:100%;padding:12px 18px;border-radius:9px;border:none;
+  font-family:var(--fH);font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.b-tg{background:var(--tg);color:#fff;}
+.b-tg:hover{background:var(--tg2);transform:translateY(-1px);}
+.b-tg:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.b-out{background:transparent;border:1px solid var(--bd);color:var(--tx);margin-top:8px;}
+.b-out:hover{border-color:var(--tg);color:var(--tg);}
+.b-gold{
+  background:linear-gradient(135deg,#f7c948,#f98c1c);color:#000;
+  font-size:15px;padding:14px;border-radius:12px;
+  box-shadow:0 4px 20px rgba(247,201,72,.2);
+}
+.b-gold:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(247,201,72,.3);}
+.b-gold:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.b-sm{width:auto;padding:7px 13px;font-size:12px;border-radius:7px;}
+
+/* ── alerts ──────────────────────── */
+.al{padding:11px 13px;border-radius:9px;font-size:13px;margin-top:10px;display:none;line-height:1.55;word-break:break-all;}
+.al.show{display:block;}
+.er{background:rgba(255,76,106,.1);border:1px solid rgba(255,76,106,.3);color:#ff8fa3;}
+.su{background:rgba(0,214,143,.1);border:1px solid rgba(0,214,143,.3);color:var(--gr);}
+.in{background:var(--tglow);border:1px solid rgba(42,171,238,.3);color:var(--tg);}
+
+/* ── session box ─────────────────── */
+.sbox{
+  background:var(--bg3);border:1px solid var(--bd);border-radius:9px;
+  padding:11px;font-size:11px;color:var(--tg);word-break:break-all;
+  margin-top:9px;cursor:pointer;transition:border-color .2s;
+}
+.sbox:hover{border-color:var(--tg);}
+
+/* ── dashboard ───────────────────── */
+.dash{
+  max-width:1060px;margin:0 auto;padding:24px 18px;
+  display:grid;grid-template-columns:310px 1fr;gap:18px;align-items:start;
+}
+@media(max-width:740px){.dash{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:15px;padding:20px;animation:up .35s ease;}
+.ct{font-family:var(--fH);font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;display:flex;align-items:center;gap:6px;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px;}
+
+/* ── members ─────────────────────── */
+.mhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
+.badge{background:var(--tglow);border:1px solid rgba(42,171,238,.3);color:var(--tg);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;}
+.mlist{height:320px;overflow-y:auto;border:1px solid var(--bd);border-radius:11px;background:var(--bg3);margin-bottom:13px;}
+.mlist::-webkit-scrollbar{width:3px;}
+.mlist::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
+.mi{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-bottom:1px solid rgba(24,38,58,.7);transition:background .12s;}
+.mi:last-child{border-bottom:none;}
+.mi:hover{background:rgba(42,171,238,.04);}
+.mi.won{background:rgba(247,201,72,.07)!important;border-color:rgba(247,201,72,.15)!important;}
+.mn{font-size:13px;color:var(--tg);}
+.mc{font-size:11px;color:var(--mu);background:var(--bg2);padding:2px 7px;border-radius:5px;}
+.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mu);font-size:13px;gap:9px;}
+
+/* ── winner box ──────────────────── */
+.wbox{
+  display:none;
+  background:linear-gradient(135deg,rgba(247,201,72,.07),rgba(249,140,28,.04));
+  border:1px solid rgba(247,201,72,.2);border-radius:13px;
+  padding:20px;text-align:center;margin-top:12px;
+  animation:pop .45s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes pop{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:scale(1)}}
+.wcrown{font-size:32px;}
+.wlb{font-size:10px;color:var(--go);text-transform:uppercase;letter-spacing:.15em;margin:6px 0 3px;}
+.wnm{font-family:var(--fH);font-size:24px;font-weight:800;color:var(--go);word-break:break-all;}
+.wbt{display:flex;gap:7px;justify-content:center;margin-top:9px;}
+
+/* ── history ─────────────────────── */
+.hi{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd);font-size:12px;}
+.hi:last-child{border-bottom:none;}
+.hw{color:var(--go);font-weight:600;}
+.hm{color:var(--mu);font-size:11px;}
+
+/* ── user info ───────────────────── */
+.ui{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--bg3);border:1px solid var(--bd);border-radius:11px;margin-bottom:16px;}
+.ua{width:36px;height:36px;border-radius:50%;background:var(--tglow);border:1px solid var(--tg);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--tg);}
+
+/* ── scan progress ───────────────── */
+.scan{display:none;background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:13px;margin:9px 0;font-size:13px;color:var(--mu);text-align:center;}
+.pb{height:3px;background:var(--bd);border-radius:2px;margin-top:8px;overflow:hidden;}
+.pf{height:100%;background:var(--tg);width:0%;border-radius:2px;transition:width .3s;animation:sh 1.5s infinite;}
+@keyframes sh{0%,100%{filter:brightness(1)}50%{filter:brightness(1.6)}}
+
+/* ── spinner ─────────────────────── */
+.sp{width:15px;height:15px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:ro .7s linear infinite;display:inline-block;}
+@keyframes ro{to{transform:rotate(360deg)}}
+
+/* ── confetti ────────────────────── */
+#cf{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;}
+.cp{position:absolute;top:-10px;width:8px;height:8px;border-radius:2px;animation:fl linear forwards;}
+@keyframes fl{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+<div id="cf"></div>
+
+<!-- ══════════════════════════════════
+     PAGE 1 — ADMIN LOGIN
+══════════════════════════════════ -->
+<div class="page active" id="p-login">
+<div class="center">
+<div class="box">
+  <div class="icon">🔐</div>
+  <h1 class="ttl">Admin Login</h1>
+  <p class="sub">Giveaway Admin Panel এ ঢুকতে<br>তোমার Admin Key দাও</p>
+  <div class="field">
+    <label>Admin Key</label>
+    <input type="password" id="inp-key" placeholder="Admin key লিখো..." />
+  </div>
+  <button class="btn b-tg" onclick="doLogin()" id="login-btn">প্রবেশ করো →</button>
+  <div class="al er" id="login-err"></div>
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 2 — TELEGRAM AUTH
+══════════════════════════════════ -->
+<div class="page" id="p-auth">
+<div class="center">
+<div class="box">
+  <div class="icon">✈️</div>
+  <h1 class="ttl">Telegram Connect</h1>
+  <p class="sub">তোমার Telegram account দিয়ে login করো<br>group এর members দেখতে পারবে</p>
+
+  <div class="steps">
+    <div class="sd on" id="sd1">1</div><div class="sl"></div>
+    <div class="sd"    id="sd2">2</div><div class="sl"></div>
+    <div class="sd"    id="sd3">✓</div>
+  </div>
+
+  <!-- Step 1: Phone -->
+  <div id="as1">
+    <div class="field">
+      <label>তোমার Phone Number</label>
+      <input type="tel" id="inp-phone" placeholder="+8801XXXXXXXXX" />
+    </div>
+    <button class="btn b-tg" id="otp-btn" onclick="sendOTP()">OTP পাঠাও</button>
+  </div>
+
+  <!-- Step 2: OTP -->
+  <div id="as2" style="display:none">
+    <p style="font-size:13px;color:var(--mu);margin-bottom:13px;line-height:1.6;">
+      📱 তোমার Telegram app এ OTP এসেছে।<br>
+      <span style="color:var(--tg)">দ্রুত দাও — OTP ২ মিনিটে expire হয়!</span>
+    </p>
+    <div class="field">
+      <label>OTP Code</label>
+      <input type="text" id="inp-otp" placeholder="1  2  3  4  5"
+        maxlength="6" style="letter-spacing:.3em;font-size:22px;text-align:center;" />
+    </div>
+    <button class="btn b-tg" id="verify-btn" onclick="verifyOTP()">Verify করো ✓</button>
+    <button class="btn b-out" onclick="backS1()">← আবার OTP পাঠাও</button>
+  </div>
+
+  <!-- Step 2b: 2FA -->
+  <div id="as2fa" style="display:none">
+    <p style="font-size:13px;color:var(--mu);margin-bottom:13px;">
+      🔒 তোমার account এ Two-Step Verification আছে
+    </p>
+    <div class="field">
+      <label>2FA Password</label>
+      <input type="password" id="inp-2fa" placeholder="Telegram cloud password..." />
+    </div>
+    <button class="btn b-tg" id="fa-btn" onclick="verify2FA()">Verify 2FA ✓</button>
+  </div>
+
+  <!-- Step 3: Session -->
+  <div id="as3" style="display:none">
+    <div class="al su show">
+      ✅ Telegram Login সফল!<br><br>
+      নিচের <strong>Session String</strong> টা copy করো।<br>
+      তারপর <strong>Vercel Dashboard → Settings → Environment Variables</strong> এ যাও।<br>
+      <code style="color:var(--go)">TELEGRAM_SESSION</code> এ paste করো → <strong>Save → Redeploy</strong> করো।<br><br>
+      Redeploy হলে আর login লাগবে না! ✨
+    </div>
+    <div class="sbox" id="sval" onclick="copySess()" title="Click করে copy করো"></div>
+    <p style="font-size:11px;color:var(--mu);text-align:center;margin-top:5px;">👆 Click করলে copy হবে</p>
+    <button class="btn b-tg" style="margin-top:13px;" onclick="goDash()">Dashboard এ যাও →</button>
+  </div>
+
+  <div class="al er" id="auth-err"></div>
+  <div class="al in" id="auth-inf"></div>
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════
+     PAGE 3 — DASHBOARD
+══════════════════════════════════ -->
+<div class="page" id="p-dash">
+<header>
+  <div class="logo">🎁 <b>Giveaway</b> Admin</div>
+  <div class="hst">
+    <div class="dot on"></div>
+    <span id="h-user" style="color:var(--tg)">@...</span>
+  </div>
+</header>
+
+<div class="dash">
+
+  <!-- LEFT: Controls -->
+  <div style="display:flex;flex-direction:column;gap:15px;">
+
+    <!-- user info -->
+    <div class="card" style="padding:13px;">
+      <div class="ui" style="margin:0;">
+        <div class="ua">👤</div>
+        <div>
+          <div style="font-weight:600;font-size:14px;" id="d-nm">...</div>
+          <div style="font-size:11px;color:var(--mu);" id="d-hd">@...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- group select -->
+    <div class="card">
+      <div class="ct">📂 Group বেছে নাও</div>
+      <div class="field" style="margin:0;">
+        <select id="sel-grp">
+          <option value="">— Groups load হচ্ছে... —</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- filters -->
+    <div class="card">
+      <div class="ct">⚙️ Filter সেট করো</div>
+      <div class="fgrid">
+        <div class="field" style="margin:0;">
+          <label>কতদিনের msg</label>
+          <select id="f-days">
+            <option value="1">শেষ ১ দিন</option>
+            <option value="3">শেষ ৩ দিন</option>
+            <option value="7" selected>শেষ ৭ দিন</option>
+            <option value="15">শেষ ১৫ দিন</option>
+            <option value="30">শেষ ৩০ দিন</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0;">
+          <label>কমপক্ষে msg</label>
+          <select id="f-min">
+            <option value="1" selected>যেকোনো</option>
+            <option value="3">৩+ টা</option>
+            <option value="5">৫+ টা</option>
+            <option value="10">১০+ টা</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>কত msg scan করবে</label>
+        <select id="f-scan">
+          <option value="200">২০০ msg (দ্রুত)</option>
+          <option value="500" selected>৫০০ msg (normal)</option>
+        </select>
+      </div>
+      <button class="btn b-tg" id="btn-col" onclick="collectMembers()">
+        🔍 Members Collect করো
+      </button>
+      <div class="scan" id="scan-box">
+        <div>⏳ Messages scan হচ্ছে...</div>
+        <div class="pb"><div class="pf" id="pf"></div></div>
+      </div>
+    </div>
+
+    <!-- exclude -->
+    <div class="card">
+      <div class="ct">🚫 Exclude করো</div>
+      <div class="field" style="margin-bottom:6px;">
+        <label>বাদ দেওয়ার usernames (comma দিয়ে)</label>
+        <input type="text" id="inp-excl" placeholder="@admin, @mod, @user1" />
+      </div>
+      <p style="font-size:11px;color:var(--mu);">এই users winner হবে না</p>
+    </div>
+
+    <!-- history -->
+    <div class="card">
+      <div class="ct">📋 Giveaway History</div>
+      <div id="hist">
+        <div style="font-size:13px;color:var(--mu);text-align:center;padding:10px;">
+          এখনো কোনো giveaway করা হয়নি
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /left -->
+
+  <!-- RIGHT: Members + Winner -->
+  <div style="display:flex;flex-direction:column;gap:15px;">
+    <div class="card">
+      <div class="mhd">
+        <div class="ct" style="margin:0;">👥 Members</div>
+        <div class="badge" id="m-cnt">০ জন</div>
+      </div>
+
+      <div class="mlist" id="m-list">
+        <div class="empty">
+          <div style="font-size:30px;">🔍</div>
+          <div>Group select করে<br>"Collect" করো</div>
+        </div>
+      </div>
+
+      <button class="btn b-gold" id="btn-win" disabled onclick="pickWinner()">
+        🎰 Random Winner বাছো
+      </button>
+
+      <div class="wbox" id="wbox">
+        <div class="wcrown">👑</div>
+        <div class="wlb">🎉 WINNER 🎉</div>
+        <div class="wnm" id="wnm">@username</div>
+        <div class="wbt">
+          <button class="btn b-sm b-out" onclick="saveGiveaway()">💾 Firebase এ Save</button>
+          <button class="btn b-sm b-tg"  onclick="pickWinner()">🔄 আবার বাছো</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /right -->
+
+</div><!-- /dash -->
+</div><!-- /p-dash -->
+
+<script>
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let KEY='', members=[], winner=null, grpTitle='';
+// auth flow state (client-side storage — fixes OTP expire issue)
+let authState = { phone:'', phoneCodeHash:'', partialSession:'', partialSession2FA:'' };
+
+// ══════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════
+const $  = id => document.getElementById(id);
+const pg = id => { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); $(id).classList.add('active'); };
+const clr= id => $(id).classList.remove('show');
+const err= (id,msg) => { const e=$(id); e.className='al er show'; e.textContent=msg; };
+const inf= (id,msg) => { const e=$(id); e.className='al in show'; e.textContent=msg; };
+
+async function api(action, body={}) {
+  const r = await fetch('/api/telegram', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'x-admin-key': KEY },
+    body: JSON.stringify({ action, ...body })
+  });
+  return r.json();
+}
+
+function setBtn(id, html, disabled=false) {
+  const b=$(id); b.innerHTML=html; b.disabled=disabled;
+}
+
+// ══════════════════════════════════════
+//  PAGE 1 — ADMIN LOGIN
+// ══════════════════════════════════════
+async function doLogin() {
+  const key = $('inp-key').value.trim();
+  if (!key) { err('login-err','Admin Key দাও'); return; }
+  KEY = key;
+  setBtn('login-btn','<div class="sp"></div> Connecting...',true);
+  clr('login-err');
+  try {
+    const d = await api('status');
+    if (d.connected) { setupDash(d); pg('p-dash'); }
+    else pg('p-auth');
+  } catch(e) {
+    err('login-err','❌ Server connect হচ্ছে না। Vercel deploy হয়েছে কিনা দেখো।');
+  }
+  setBtn('login-btn','প্রবেশ করো →',false);
+}
+
+// ══════════════════════════════════════
+//  PAGE 2 — TELEGRAM AUTH
+// ══════════════════════════════════════
+async function sendOTP() {
+  const phone = $('inp-phone').value.trim();
+  if (!phone) { err('auth-err','Phone number দাও (+880...)'); return; }
+  clr('auth-err'); inf('auth-inf','📤 OTP পাঠানো হচ্ছে...');
+  setBtn('otp-btn','<div class="sp"></div> পাঠানো হচ্ছে...',true);
+
+  const d = await api('send-code', { phone });
+  setBtn('otp-btn','OTP পাঠাও',false);
+  clr('auth-inf');
+
+  if (d.success) {
+    // KEY FIX: server থেকে phoneCodeHash এবং partialSession দুটোই save করছি
+    // এই partialSession টা verifyOTP এ ফেরত দেব যাতে same client restore হয়
+    authState.phone          = phone;
+    authState.phoneCodeHash  = d.phoneCodeHash;
+    authState.partialSession = d.partialSession;
+
+    $('as1').style.display='none';
+    $('as2').style.display='block';
+    $('sd1').className='sd done'; $('sd2').className='sd on';
+    $('inp-otp').focus();
+  } else {
+    err('auth-err', d.error || 'OTP পাঠানো যায়নি। Phone number ঠিক আছে?');
+  }
+}
+
+async function verifyOTP() {
+  const code = $('inp-otp').value.trim();
+  if (!code) { err('auth-err','OTP দাও'); return; }
+  clr('auth-err');
+  setBtn('verify-btn','<div class="sp"></div> Verify হচ্ছে...',true);
+
+  // KEY FIX: partialSession সহ পাঠাচ্ছি — server এ same client restore হবে
+  // তাই code expire হবে না
+  const d = await api('verify-code', {
+    phone:          authState.phone,
+    code:           code,
+    phoneCodeHash:  authState.phoneCodeHash,
+    partialSession: authState.partialSession
+  });
+
+  setBtn('verify-btn','Verify করো ✓',false);
+
+  if (d.success) {
+    showSession(d.session);
+  } else if (d.need2FA) {
+    authState.partialSession2FA = d.partialSession2FA || '';
+    $('as2').style.display='none';
+    $('as2fa').style.display='block';
+  } else {
+    err('auth-err', d.error || 'Verification ব্যর্থ।');
+    if (d.error && d.error.includes('expire')) {
+      // auto reset to step 1
+      setTimeout(()=>{ backS1(); clr('auth-err'); },2000);
+    }
+  }
+}
+
+async function verify2FA() {
+  const pass = $('inp-2fa').value;
+  if (!pass) { err('auth-err','Password দাও'); return; }
+  clr('auth-err');
+  setBtn('fa-btn','<div class="sp"></div> Verify হচ্ছে...',true);
+
+  const d = await api('verify-2fa', {
+    password:          pass,
+    partialSession2FA: authState.partialSession2FA
+  });
+
+  setBtn('fa-btn','Verify 2FA ✓',false);
+
+  if (d.success) showSession(d.session);
+  else err('auth-err', d.error || '2FA ব্যর্থ। Password ঠিক আছে?');
+}
+
+function showSession(session) {
+  $('sd2').className='sd done'; $('sd3').className='sd on';
+  $('as2').style.display='none';
+  $('as2fa').style.display='none';
+  $('as3').style.display='block';
+  $('sval').textContent = session;
+  $('sval').dataset.v   = session;
+}
+
+function copySess() {
+  const el=$('sval');
+  navigator.clipboard.writeText(el.dataset.v||el.textContent)
+    .then(()=>{ el.style.color='var(--gr)'; setTimeout(()=>el.style.color='',1500); });
+}
+
+function backS1() {
+  $('as2').style.display='none';
+  $('as2fa').style.display='none';
+  $('as1').style.display='block';
+  $('sd1').className='sd on'; $('sd2').className='sd';
+  $('inp-otp').value='';
+  clr('auth-err');
+}
+
+async function goDash() {
+  const d = await api('status');
+  if (d.connected) { setupDash(d); pg('p-dash'); }
+  else err('auth-err','Vercel এ TELEGRAM_SESSION add করে Redeploy করো, তারপর আবার try করো।');
+}
+
+// ══════════════════════════════════════
+//  DASHBOARD SETUP
+// ══════════════════════════════════════
+function setupDash(data) {
+  $('h-user').textContent = '@'+(data.username||'');
+  $('d-nm').textContent   = data.name||'Telegram User';
+  $('d-hd').textContent   = '@'+(data.username||'');
+  loadGroups();
+  loadHistory();
+}
+
+async function loadGroups() {
+  const d = await api('groups');
+  if (!d.success) return;
+  const sel=$('sel-grp');
+  sel.innerHTML='<option value="">— Group বেছে নাও —</option>';
+  d.groups.forEach(g=>{
+    const o=document.createElement('option');
+    o.value=g.id;
+    o.textContent=(g.type==='channel'?'📢 ':'👥 ')+g.title;
+    sel.appendChild(o);
+  });
+}
+
+// ══════════════════════════════════════
+//  COLLECT MEMBERS
+// ══════════════════════════════════════
+async function collectMembers() {
+  const gid=$('sel-grp').value;
+  if (!gid) { alert('আগে Group বেছে নাও!'); return; }
+
+  setBtn('btn-col','<div class="sp"></div> Scanning...',true);
+  $('scan-box').style.display='block';
+
+  let p=0;
+  const iv=setInterval(()=>{ p=Math.min(p+3,85); $('pf').style.width=p+'%'; },200);
+
+  const d = await api('members',{
+    groupId:     gid,
+    days:        parseInt($('f-days').value),
+    minMessages: parseInt($('f-min').value),
+    maxScan:     parseInt($('f-scan').value)
+  });
+
+  clearInterval(iv);
+  $('pf').style.width='100%';
+  setTimeout(()=>{ $('scan-box').style.display='none'; $('pf').style.width='0%'; },500);
+  setBtn('btn-col','🔍 Members Collect করো',false);
+
+  if (d.success) {
+    members=d.members; grpTitle=d.groupTitle;
+    renderMembers();
+    $('m-cnt').textContent=members.length+' জন';
+    $('btn-win').disabled=!members.length;
+    if (!members.length) alert('কোনো member পাওয়া যায়নি। Filter কমাও বা অন্য group try করো।');
+  } else {
+    alert('Error: '+(d.error||'Unknown error'));
+  }
+}
+
+function renderMembers() {
+  const list=$('m-list');
+  if (!members.length) {
+    list.innerHTML='<div class="empty"><div style="font-size:28px;">😕</div><div>কেউ পাওয়া যায়নি<br>Days filter বাড়াও</div></div>';
+    return;
+  }
+  list.innerHTML=members.map(m=>
+    `<div class="mi" id="mi-${m.username}">
+      <span class="mn">@${m.username}</span>
+      <span class="mc">${m.messageCount} msg</span>
+    </div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════
+//  PICK WINNER
+// ══════════════════════════════════════
+function pickWinner() {
+  if (!members.length) return;
+  const excl=$('inp-excl').value
+    .split(',').map(u=>u.trim().replace('@','').toLowerCase()).filter(Boolean);
+  const pool=members.filter(m=>!excl.includes(m.username.toLowerCase()));
+  if (!pool.length) { alert('Exclude করার পর কেউ নেই!'); return; }
+
+  document.querySelectorAll('.won').forEach(e=>e.classList.remove('won'));
+  winner=pool[Math.floor(Math.random()*pool.length)];
+
+  const el=$('mi-'+winner.username);
+  if (el) { el.classList.add('won'); el.scrollIntoView({behavior:'smooth',block:'center'}); }
+
+  $('wnm').textContent='@'+winner.username;
+  const wb=$('wbox');
+  wb.style.display='block'; wb.style.animation='none';
+  wb.offsetHeight;
+  wb.style.animation='pop .45s cubic-bezier(.34,1.56,.64,1)';
+  confetti();
+}
+
+// ══════════════════════════════════════
+//  FIREBASE SAVE
+// ══════════════════════════════════════
+async function saveGiveaway() {
+  if (!winner || !window._db) { alert('Firebase ready নেই'); return; }
+  try {
+    await window._add(window._col(window._db,'giveaways'),{
+      winner:      winner.username,
+      winnerName:  winner.firstName,
+      group:       grpTitle,
+      participants:members.length,
+      date:        new Date().toLocaleDateString('bn-BD'),
+      timestamp:   new Date().toISOString()
+    });
+    alert('✅ Firebase এ Save হয়েছে!');
+    loadHistory();
+  } catch(e) { alert('Firebase error: '+e.message); }
+}
+
+async function loadHistory() {
+  if (!window._db) return;
+  try {
+    const snap=await window._get(window._q(
+      window._col(window._db,'giveaways'),
+      window._ord('timestamp','desc'),
+      window._lim(8)
+    ));
+    const el=$('hist');
+    if (snap.empty) { el.innerHTML='<div style="font-size:13px;color:var(--mu);text-align:center;padding:10px;">এখনো কোনো giveaway করা হয়নি</div>'; return; }
+    el.innerHTML=snap.docs.map(d=>{
+      const r=d.data();
+      return `<div class="hi">
+        <div><div class="hw">@${r.winner}</div><div class="hm">${r.group} · ${r.participants} জন</div></div>
+        <div class="hm">${r.date}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+// ══════════════════════════════════════
+//  CONFETTI
+// ══════════════════════════════════════
+function confetti() {
+  const c=$('cf'); c.innerHTML='';
+  const cols=['#2AABEE','#f7c948','#00d68f','#ff4c6a','#c77dff','#fff'];
+  for (let i=0;i<65;i++) {
+    const p=document.createElement('div'); p.className='cp';
+    p.style.cssText=`left:${Math.random()*100}vw;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${Math.random()*2+1.4}s;animation-delay:${Math.random()*.4}s;width:${Math.random()*8+4}px;height:${Math.random()*8+4}px;`;
+    c.appendChild(p);
+  }
+  setTimeout(()=>c.innerHTML='',4000);
+}
+
+// ══════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ══════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const id = document.querySelector('.page.active').id;
+  if (id==='p-login') doLogin();
+  else if (id==='p-auth') {
+    if ($('as1').style.display!=='none') sendOTP();
+    else if ($('as2').style.display!=='none') verifyOTP();
+    else if ($('as2fa').style.display!=='none') verify2FA();
+  }
+});
+</script>
+</body>
+</html>
